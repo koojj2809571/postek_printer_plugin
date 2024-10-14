@@ -1,3 +1,4 @@
+import 'package:flutter/src/services/platform_channel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:postek_printer_plugin/postek_printer_plugin.dart';
 import 'package:postek_printer_plugin/postek_printer_plugin_platform_interface.dart';
@@ -6,23 +7,51 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class MockPostekPrinterPluginPlatform
     with MockPlatformInterfaceMixin
-    implements PostekPrinterPluginPlatform {
+    implements PostekPlatform {
 
   @override
   Future<String?> getPlatformVersion() => Future.value('42');
+
+  @override
+  Future<void> connectDevices(String printerAddress) {
+    // TODO: implement connectDevices
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> disconnected() {
+    // TODO: implement disconnected
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> print(String printType) {
+    // TODO: implement print
+    throw UnimplementedError();
+  }
+
+  @override
+  // TODO: implement event
+  EventChannel get event => throw UnimplementedError();
+
+  @override
+  Future<void> scanDevices() {
+    // TODO: implement scanDevices
+    throw UnimplementedError();
+  }
 }
 
 void main() {
-  final PostekPrinterPluginPlatform initialPlatform = PostekPrinterPluginPlatform.instance;
+  final PostekPlatform initialPlatform = PostekPlatform.instance;
 
-  test('$MethodChannelPostekPrinterPlugin is the default instance', () {
-    expect(initialPlatform, isInstanceOf<MethodChannelPostekPrinterPlugin>());
+  test('$PostekPlugin is the default instance', () {
+    expect(initialPlatform, isInstanceOf<PostekPlugin>());
   });
 
   test('getPlatformVersion', () async {
     PostekPrinterPlugin postekPrinterPlugin = PostekPrinterPlugin();
     MockPostekPrinterPluginPlatform fakePlatform = MockPostekPrinterPluginPlatform();
-    PostekPrinterPluginPlatform.instance = fakePlatform;
+    PostekPlatform.instance = fakePlatform;
 
     expect(await postekPrinterPlugin.getPlatformVersion(), '42');
   });

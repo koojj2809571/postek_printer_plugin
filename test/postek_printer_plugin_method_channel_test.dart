@@ -5,7 +5,7 @@ import 'package:postek_printer_plugin/postek_printer_plugin_method_channel.dart'
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  MethodChannelPostekPrinterPlugin platform = MethodChannelPostekPrinterPlugin();
+  PostekPlugin platform = PostekPlugin();
   const MethodChannel channel = MethodChannel('postek_printer_plugin');
 
   setUp(() {

@@ -48,6 +48,8 @@ android {
         testImplementation("junit:junit:4.13.2")
         testImplementation("org.mockito:mockito-core:5.0.0")
         api('com.postek.cdfpsk:CDFPSKAndroid:1.0.0')
+        implementation('com.google.code.gson:gson:2.11.0')
+
     }
 
     testOptions {

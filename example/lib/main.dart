@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:postek_printer_plugin/postek_printer_plugin.dart';
 
 void main() {
@@ -17,12 +18,17 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
-  final _postekPrinterPlugin = PostekPrinterPlugin();
+  final _printerPlugin = PostekPrinterPlugin();
 
   @override
   void initState() {
     super.initState();
     initPlatformState();
+
+    [Permission.location].request().then((result){
+      PermissionStatus? status = result[Permission.location];
+
+    });
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -31,8 +37,8 @@ class _MyAppState extends State<MyApp> {
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
-      platformVersion =
-          await _postekPrinterPlugin.getPlatformVersion() ?? 'Unknown platform version';
+      platformVersion = await _printerPlugin.getPlatformVersion() ??
+          'Unknown platform version';
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     }
@@ -45,6 +51,15 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _platformVersion = platformVersion;
     });
+
+    _printerPlugin.event.receiveBroadcastStream().listen(
+      (event) {
+        print('event $event');
+      },
+      onError: (error) {
+        print('error $error');
+      },
+    );
   }
 
   @override
@@ -54,10 +69,38 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 1, width: double.infinity),
+            Text('Running on: $_platformVersion\n'),
+            InkWell(
+              onTap: () {
+                _printerPlugin.scanDevices();
+              },
+              child: Container(
+                margin: const EdgeInsets.only(top: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: const BoxDecoration(
+                  color: Colors.lightBlue,
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                ),
+                child: const Text(
+                  "开始扫描",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _printerPlugin.disconnected();
+    super.dispose();
   }
 }
