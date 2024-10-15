@@ -1,11 +1,6 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
+part of 'postek_printer_plugin.dart';
 
-import 'postek_printer_plugin_platform_interface.dart';
-
-/// An implementation of [PostekPlatform] that uses method channels.
 class PostekPlugin extends PostekPlatform {
-  /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('postek_printer_method_channel');
   final eventChannel = const EventChannel("postek_printer_event_channel");

@@ -1,6 +1,16 @@
-import 'package:flutter/services.dart';
+library postek_printer_plugin;
 
-import 'postek_printer_plugin_platform_interface.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'dart:convert';
+
+part 'postek_printer_plugin_method_channel.dart';
+part 'postek_printer_plugin_platform_interface.dart';
+part 'bean/notify_bean.dart';
+part 'bean/notify_bean.g.dart';
+part 'bean/devices_bean.dart';
+part 'bean/devices_bean.g.dart';
 
 class PostekPrinterPlugin {
 

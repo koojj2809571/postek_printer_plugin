@@ -128,10 +128,9 @@ public class PrinterUtil {
             @Override
             public void sendPacketProgress(String address, int percentage, byte[] data) {
                 super.sendPacketProgress(address, percentage, data);
-                sink.success(getResultStr("sendPacketProgress", percentage));
-                if(percentage == 100) {
-                    Toast.makeText(activity, "打印数据传输成功", Toast.LENGTH_SHORT).show();
-                }
+                activity.runOnUiThread(() -> {
+                    sink.success(getResultStr("sendPacketProgress", percentage));
+                });
             }
         });
     }
@@ -143,8 +142,8 @@ public class PrinterUtil {
         Map<String, Object> result = new HashMap<>();
         result.put("type", type);
         if (data != null) {
-            result.put("data", new Gson().toJson(data));
+            result.put("data", data);
         }
-        return result.toString();
+        return new Gson().toJson(result);
     }
 }

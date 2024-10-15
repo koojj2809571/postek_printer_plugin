@@ -1,8 +1,6 @@
 import 'package:flutter/src/services/platform_channel.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:postek_printer_plugin/postek_printer_plugin.dart';
-import 'package:postek_printer_plugin/postek_printer_plugin_platform_interface.dart';
-import 'package:postek_printer_plugin/postek_printer_plugin_method_channel.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class MockPostekPrinterPluginPlatform
