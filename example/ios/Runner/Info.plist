@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>此应用需要使用蓝牙功能来连接打印设备</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>应用需要连接蓝牙外设</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>用于蓝牙定位等功能</string>
 </dict>
 </plist>

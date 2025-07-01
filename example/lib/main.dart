@@ -28,8 +28,23 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     initPlatformState();
 
-    [Permission.location].request().then((result) {
-      PermissionStatus? status = result[Permission.location];
+    [
+      Permission.location,
+      Permission.bluetooth,
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect
+    ].request().then((result) {
+      // Handle permissions result
+      bool allGranted = result.values.every((status) => status.isGranted);
+      if (allGranted) {
+        // Start scanning when permissions are granted
+        _printerPlugin.scanDevices();
+      } else {
+        Fluttertoast.showToast(
+          msg: "需要蓝牙和定位权限来扫描设备",
+          toastLength: Toast.LENGTH_LONG,
+        );
+      }
     });
   }
 
@@ -50,24 +65,60 @@ class _MyAppState extends State<MyApp> {
 
     _printerPlugin.event.receiveBroadcastStream().listen(
       (event) {
-        NotifyBean notify = NotifyBean.fromJson(event as String);
+        // if (event is String) {
+        //   NotifyBean notify = NotifyBean.fromJson(event as String);
+        // switch (notify.type) {
+        //   case 'DEVICES_FOUND':
+        //     DevicesBean device = DevicesBean.fromJson(notify.data);
+        //     bool exist = devices.any((e) => e.address == device.address);
+        //     if (!exist) {
+        //       devices.add(device);
+        //       setState(() {});
+        //     }
+        //     break;
+        //   case 'BlePeripheralConnected':
+        //     print('BlePeripheralConnected: ${notify.data}');
+        //     Fluttertoast.showToast(
+        //       msg: "已连接打印机",
+        //       toastLength: Toast.LENGTH_SHORT,
+        //       gravity: ToastGravity.BOTTOM,
+        //       timeInSecForIosWeb: 1,
+        //       fontSize: 16.0,
+        //     );
+        //     setState(() {
+        //       canPrint = true;
+        //     });
+        //     break;
+        //   case 'blePeripheralDisconnected':
+        //     print('blePeripheralDisconnected: ${notify.data}');
+        //     break;
+        //   case 'sendPacketProgress':
+        //     print('sendPacketProgress: ${notify.data}');
+        //     break;
+        // }
+        // NotifyBean notify = NotifyBean.fromJson(event as String);
+        final type = event['type'];
+        final data = event['data'];
+        NotifyBean notify = NotifyBean(type: type, data: data);
         switch (notify.type) {
           case 'DEVICES_FOUND':
-            DevicesBean device = DevicesBean.fromJson(notify.data);
+            DevicesBean device = DevicesBean(
+                address: notify.data['address'],
+                name: notify.data['name'],
+                rssi: notify.data['rssi']);
             bool exist = devices.any((e) => e.address == device.address);
             if (!exist) {
-              devices.add(device);
-              setState(() {});
+              setState(() {
+                devices.add(device);
+              });
             }
             break;
           case 'BlePeripheralConnected':
             print('BlePeripheralConnected: ${notify.data}');
             Fluttertoast.showToast(
-              msg: "已连接打印机",
+              msg: "打印机已连接",
               toastLength: Toast.LENGTH_SHORT,
               gravity: ToastGravity.BOTTOM,
-              timeInSecForIosWeb: 1,
-              fontSize: 16.0,
             );
             setState(() {
               canPrint = true;
@@ -75,16 +126,41 @@ class _MyAppState extends State<MyApp> {
             break;
           case 'blePeripheralDisconnected':
             print('blePeripheralDisconnected: ${notify.data}');
+            setState(() {
+              canPrint = false;
+            });
+            Fluttertoast.showToast(
+              msg: "打印机已断开连接",
+              toastLength: Toast.LENGTH_SHORT,
+            );
             break;
           case 'sendPacketProgress':
             print('sendPacketProgress: ${notify.data}');
             break;
         }
+        // }
       },
       onError: (error) {
-        print('error $error');
+        print('Error: $error');
+        Fluttertoast.showToast(
+          msg: "发生错误: $error",
+          toastLength: Toast.LENGTH_SHORT,
+        );
       },
     );
+  }
+
+  void _printSampleText() {
+    if (!canPrint) {
+      Fluttertoast.showToast(
+        msg: "请先连接打印机",
+        toastLength: Toast.LENGTH_SHORT,
+      );
+      return;
+    }
+
+    // 打印示例文本
+    _printerPlugin.print("FixedAssets");
   }
 
   @override
@@ -92,59 +168,46 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('Postek打印机示例'),
         ),
         body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 1, width: double.infinity),
-            Text('Running on: $_platformVersion\n'),
-            _click("开始扫描", () {
-              _printerPlugin.scanDevices();
-            }),
+            const SizedBox(height: 20),
+            Text('运行平台: $_platformVersion\n'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildButton("扫描设备", () {
+                  setState(() {
+                    devices.clear();
+                  });
+                  _printerPlugin.scanDevices();
+                }),
+                if (canPrint) _buildButton("打印测试", _printSampleText),
+              ],
+            ),
             Expanded(
-              flex: 1,
-              child: ListView.separated(
-                itemBuilder: (ctx, idx) {
-                  DevicesBean item = devices[idx];
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 5,
-                    ),
-                    margin: const EdgeInsets.only(top: 20),
-                    decoration: const BoxDecoration(
-                      color: Colors.black12,
-                      borderRadius: BorderRadius.all(Radius.circular(6)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          children: [
-                            Text(item.name ?? ''),
-                            Text(item.address ?? ''),
-                          ],
-                        ),
-                        const Expanded(flex: 1, child: SizedBox()),
-                        _click("连接", () {
-                          if (item.address == null || item.address!.isEmpty) return;
-                          _printerPlugin.connectDevices(item.address!);
-                        }),
-                        const SizedBox(width: 20, height: 1),
-                        if(canPrint)
-                        _click("打印", () {
-                          _printerPlugin.print("FixedAssets");
-                        }),
-                      ],
+              child: ListView.builder(
+                itemCount: devices.length,
+                itemBuilder: (context, index) {
+                  final device = devices[index];
+                  return Card(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ListTile(
+                      title: Text(device.name ?? "未知设备"),
+                      subtitle: Text(device.address ?? "无地址"),
+                      trailing: ElevatedButton(
+                        onPressed: () {
+                          if (device.address != null) {
+                            _printerPlugin.connectDevices(device.address!);
+                          }
+                        },
+                        child: Text(canPrint ? "已连接" : "连接"),
+                      ),
                     ),
                   );
                 },
-                separatorBuilder: (ctx, idx) {
-                  return Container();
-                },
-                itemCount: devices.length,
               ),
             ),
           ],
@@ -153,24 +216,10 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Widget _click(String text, void Function() click) {
-    return InkWell(
-      onTap: click,
-      child: Container(
-        margin: const EdgeInsets.only(top: 20),
-        padding: const EdgeInsets.symmetric(
-          vertical: 5,
-          horizontal: 10,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.lightBlue,
-          borderRadius: BorderRadius.all(Radius.circular(4)),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(color: Colors.white),
-        ),
-      ),
+  Widget _buildButton(String text, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      child: Text(text),
     );
   }
 
