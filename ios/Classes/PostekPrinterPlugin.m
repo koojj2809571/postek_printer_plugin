@@ -39,7 +39,9 @@
     self.discoveredPeripherals = [NSMutableArray array];
     self.advertisementDatas = [NSMutableArray array];
     self.RSSIs = [NSMutableArray array];
+#if !TARGET_OS_SIMULATOR
     self.ptkSDk = [PTKPrintSDK sharedPTKPrintInstance];
+#endif
     self.isScanning = NO;
   }
   return self;
@@ -69,6 +71,10 @@
   } else if ([call.method isEqualToString:@"Print"]) {
     NSDictionary *args = call.arguments;
     NSString *type = args[@"PrintType"] ?: @"";
+#if TARGET_OS_SIMULATOR
+    NSLog(@"PTKPrintSDK 不支持模拟器");
+    result(@"PTKPrintSDK 不支持模拟器");
+#else
     if ([type isEqualToString:@"FixedAssets"]) {
         [PrintFixedAssets printWithSDK:self.ptkSDk];
         result(@"Printed FixedAssets");
@@ -79,6 +85,7 @@
     } else {
         // Handle unknown print type
     }
+#endif
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -127,12 +134,14 @@
   if (self.isScanning) {
     [self stopScan];
   }
-//  [self.centralManager connectPeripheral:targetPeripheral options:nil];
+#if !TARGET_OS_SIMULATOR
   self.connectedPeripheral = targetPeripheral;
   _ptkSDk.mgr=self.centralManager;
   _ptkSDk.currPeripheral=self.connectedPeripheral;
-  
   [_ptkSDk ConnectPreiPheral:self.centralManager andPeripheral:self.connectedPeripheral];
+#else
+  self.connectedPeripheral = targetPeripheral;
+#endif
 }
 - (void)disconnectPeripheral {
   if (self.connectedPeripheral) {
@@ -216,12 +225,6 @@
     if (self.eventSink) self.eventSink(@{ @"event": @"discover_characteristics_failed", @"error": error.localizedDescription });
     return;
   }
-//  for (CBCharacteristic *characteristic in service.characteristics) {
-//    if ((characteristic.properties & CBCharacteristicPropertyWrite) || (characteristic.properties & CBCharacteristicPropertyWriteWithoutResponse)) {
-////      self.writeCharacteristic = characteristic;
-//      if (self.eventSink) self.eventSink(@{ @"event": @"ready_to_print" });
-//    }
-//  }
     NSLog(@"扫描到服务%@的%lu个特征", service.UUID.UUIDString, service.characteristics.count);
     NSString *services=service.UUID.UUIDString;
     // 遍历特征, 拿到需要的特征处理
@@ -230,6 +233,7 @@
             //拿到可读的特征了
             [self.connectedPeripheral setNotifyValue:YES forCharacteristic:characteristic];
         }
+#if !TARGET_OS_SIMULATOR
         if (characteristic.properties & CBCharacteristicPropertyWriteWithoutResponse ){
             BOOL a=[services isEqual:@"18F0"];
             if (a) {
@@ -238,15 +242,24 @@
                 {
                     self.wrNoReCharacteristic = characteristic;
                     _ptkSDk.wrNoReCharacteristic=characteristic;
-                  //  NSLog(@"services%@",services);
                 }
             }
-           
         }
+#else
+        if (characteristic.properties & CBCharacteristicPropertyWriteWithoutResponse ){
+            BOOL a=[services isEqual:@"18F0"];
+            if (a) {
+                if (!self.wrNoReCharacteristic)
+                {
+                    self.wrNoReCharacteristic = characteristic;
+                }
+            }
+        }
+#endif
         if (characteristic.properties & CBCharacteristicPropertyWrite){
             if (!self.writeCharacteristic) self.writeCharacteristic = characteristic;
+        }
     }
-  }
 }
 - (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error {
   if (error) {
