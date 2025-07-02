@@ -35,7 +35,7 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
+    // 延迟初始化centralManager
     self.discoveredPeripherals = [NSMutableArray array];
     self.advertisementDatas = [NSMutableArray array];
     self.RSSIs = [NSMutableArray array];
@@ -47,16 +47,26 @@
   return self;
 }
 
+/// 延迟初始化centralManager
+- (void)ensureCentralManagerInitialized {
+  if (!self.centralManager) {
+    self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
+  }
+}
+
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {  
   if ([@"getPlatformVersion" isEqualToString:call.method]) {
     result([@"iOS " stringByAppendingString:[[UIDevice currentDevice] systemVersion]]);
   } else if ([call.method isEqualToString:@"StartScan"]) {
+    [self ensureCentralManagerInitialized];
     [self startScan];
     result(@"Scanning started");
   } else if ([call.method isEqualToString:@"StopScan"]) {
+    [self ensureCentralManagerInitialized];
     [self stopScan];
     result(@"Scanning stopped");
   } else if ([call.method isEqualToString:@"ConnectDevices"]) {
+    [self ensureCentralManagerInitialized];
     NSDictionary *args = call.arguments;
     NSString *deviceId = args[@"Address"];
     if (deviceId) {
@@ -66,6 +76,7 @@
       result([FlutterError errorWithCode:@"INVALID_ARGS" message:@"Device ID not provided" details:nil]);
     }
   } else if ([call.method isEqualToString:@"disconnected"]) {
+    [self ensureCentralManagerInitialized];
     [self disconnectPeripheral];
     result(@"Disconnected");
   } else if ([call.method isEqualToString:@"Print"]) {
@@ -103,6 +114,12 @@
 
 #pragma mark - 蓝牙相关方法
 - (void)startScan {
+  if (self.centralManager.state != CBManagerStatePoweredOn) {
+    if (self.eventSink) {
+      self.eventSink(@{ @"event": @"bluetooth_unavailable", @"state": @(self.centralManager.state) });
+    }
+    return;
+  }
   [self disconnectPeripheral];
   [self.discoveredPeripherals removeAllObjects];
   [self.advertisementDatas removeAllObjects];
@@ -155,6 +172,10 @@
 #pragma mark - CBCentralManagerDelegate & CBPeripheralDelegate
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central {
   if (central.state == CBManagerStatePoweredOn) {
+    if (!self.isScanning) {
+      // 授权后自动重试扫描
+      [self.centralManager scanForPeripheralsWithServices:nil options:nil];
+    }
     if (self.eventSink) self.eventSink(@{ @"event": @"bluetooth_on" });
   } else {
     if (self.eventSink) self.eventSink(@{ @"event": @"bluetooth_off", @"state": @(central.state) });

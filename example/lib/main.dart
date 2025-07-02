@@ -29,10 +29,7 @@ class _MyAppState extends State<MyApp> {
     initPlatformState();
 
     [
-      Permission.location,
       Permission.bluetooth,
-      Permission.bluetoothScan,
-      Permission.bluetoothConnect
     ].request().then((result) {
       // Handle permissions result
       bool allGranted = result.values.every((status) => status.isGranted);
@@ -41,7 +38,7 @@ class _MyAppState extends State<MyApp> {
         _printerPlugin.scanDevices();
       } else {
         Fluttertoast.showToast(
-          msg: "需要蓝牙和定位权限来扫描设备",
+          msg: "需要蓝牙权限来扫描设备",
           toastLength: Toast.LENGTH_LONG,
         );
       }
