@@ -1,14 +1,17 @@
 package com.recycloud.plugin.postek_printer_plugin.util;
 
+import static com.recycloud.plugin.postek_printer_plugin.util.BluetoothUtil.isBluetoothEnabled;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.widget.Toast;
 
 import com.feasycom.common.bean.ConnectType;
 import com.feasycom.common.bean.FscDevice;
@@ -29,6 +32,9 @@ import java.util.Map;
 
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.os.Handler;
 
 public class PrinterUtil {
     private final Activity activity;
@@ -42,9 +48,9 @@ public class PrinterUtil {
 
             int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
 
-            if (blueState == BluetoothAdapter.STATE_OFF) {
-                cdf.PTK_StartScan();
-                setCallback();
+            if (blueState == BluetoothAdapter.STATE_ON) {
+                // 开关蓝牙后，要停止扫瞄不然会导致无法立刻扫瞄到设备
+                cdf.PTK_StopScan();
             }
         }
     };
@@ -57,11 +63,20 @@ public class PrinterUtil {
     }
 
     public void scanDevices(){
+        if (!isBluetoothEnabled()) {
+            sink.success(getResultStr("bluetoothIsDisabled"));
+            return;
+        }
+        cdf.PTK_DisConnectBle();
         cdf.PTK_StartScan();
         setCallback();
     }
 
     public void print(String printType){
+        if (!isBluetoothEnabled()) {
+            sink.success(getResultStr("bluetoothIsDisabled"));
+            return;
+        }
         IPrintTemplate printer = null;
         switch (printType){
             case "FixedAssets":
@@ -80,13 +95,34 @@ public class PrinterUtil {
     }
 
     public void connectedBLE(MethodCall call){
-        cdf.PTK_ConnectBle(call.argument("Address"));
+        if (!isBluetoothEnabled()) {
+            sink.success(getResultStr("bluetoothIsDisabled"));
+            return;
+        }
+        String address = call.argument("Address");
+        if (isDeviceConnected(address)) {
+//            cdf.PTK_DisConnectBle();
+            sink.success(getResultStr("blePeripheralConnected"));
+        }else {
+            cdf.PTK_ConnectBle(address);
+        }
     }
 
     public void disconnected(){
         cdf.PTK_DisConnectBle();
         activity.unregisterReceiver(myBroadcastReceiver);
         cdf.PTK_StopScan();
+    }
+
+    public boolean isDeviceConnected(String address) {
+        BluetoothManager bluetoothManager = (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
+        List<BluetoothDevice> connectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
+        for (BluetoothDevice device : connectedDevices) {
+            if (device.getAddress().equals(address)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void initReceive() {
@@ -116,13 +152,13 @@ public class PrinterUtil {
             @Override
             public void blePeripheralConnected(BluetoothGatt bluetoothGatt, String s, ConnectType connectType) {
                 super.blePeripheralConnected(bluetoothGatt, s, connectType);
-                sink.success(getResultStr("BlePeripheralConnected"));
+                sink.success(getResultStr("blePeripheralConnected", s));
             }
 
             @Override
             public void blePeripheralDisconnected(BluetoothGatt bluetoothGatt, String s, int i) {
                 super.blePeripheralDisconnected(bluetoothGatt, s, i);
-                sink.success(getResultStr("blePeripheralDisconnected"));
+                sink.success(getResultStr("blePeripheralDisconnected", s));
             }
 
             @Override

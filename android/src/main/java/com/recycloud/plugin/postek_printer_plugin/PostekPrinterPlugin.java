@@ -41,20 +41,20 @@ public class PostekPrinterPlugin implements FlutterPlugin, MethodCallHandler, Ac
 
     Log.e("打印插件", "onMethodCall: " + call.method);
 
-    if (!BluetoothUtil.isBluetoothSupported()){
-      result.success("Bluetooth not supported");
-      return;
-    }
+//    if (!BluetoothUtil.isBluetoothSupported()){
+//      result.success("Bluetooth not supported");
+//      return;
+//    }
+//
+//    if (!BluetoothUtil.isBluetoothEnabled()){
+//      boolean success = BluetoothUtil.turnOnBluetooth();
+//      if (!success){
+//        result.success("Bluetooth not supported");
+//        return;
+//      }
+//    }
 
-    if (!BluetoothUtil.isBluetoothEnabled()){
-      boolean success = BluetoothUtil.turnOnBluetooth();
-      if (!success){
-        result.success("Bluetooth not supported");
-        return;
-      }
-    }
-
-    Log.e("打印插件", "onMethodCall: 蓝牙检查通过");
+//    Log.e("打印插件", "onMethodCall: 蓝牙检查通过");
 
     switch (call.method){
       case "getPlatformVersion":

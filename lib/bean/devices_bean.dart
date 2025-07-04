@@ -10,6 +10,7 @@ class DevicesBean {
   String? name;
   int? rssi;
   List<int> scanRecord;
+  bool isConnected;
 
   DevicesBean({
     this.address,
@@ -21,9 +22,10 @@ class DevicesBean {
     this.name,
     this.rssi,
     this.scanRecord = const [],
+    this.isConnected = false,
   });
 
-  factory DevicesBean.fromJson(dynamic json){
+  factory DevicesBean.fromJson(dynamic json) {
     return _$DevicesBeanFromJson(json as Map<String, dynamic>? ?? {});
   }
 
@@ -61,7 +63,8 @@ class MBluetoothBondCache {
     this.mPropertyName,
   });
 
-  factory MBluetoothBondCache.fromJson(Map<String, dynamic> json) => _$MBluetoothBondCacheFromJson(json);
+  factory MBluetoothBondCache.fromJson(Map<String, dynamic> json) =>
+      _$MBluetoothBondCacheFromJson(json);
 
   Map<String, dynamic> toJson() => _$MBluetoothBondCacheToJson(this);
 }

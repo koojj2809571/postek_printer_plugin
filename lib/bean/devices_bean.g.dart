@@ -22,6 +22,7 @@ DevicesBean _$DevicesBeanFromJson(Map<String, dynamic> json) => DevicesBean(
               ?.map((e) => (e as num).toInt())
               .toList() ??
           const [],
+      isConnected: json['isConnected'] ?? false,
     );
 
 Map<String, dynamic> _$DevicesBeanToJson(DevicesBean instance) =>
@@ -35,6 +36,7 @@ Map<String, dynamic> _$DevicesBeanToJson(DevicesBean instance) =>
       'name': instance.name,
       'rssi': instance.rssi,
       'scanRecord': instance.scanRecord,
+      'isConnected': instance.isConnected,
     };
 
 Device _$DeviceFromJson(Map<String, dynamic> json) => Device(

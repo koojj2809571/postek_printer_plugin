@@ -80,6 +80,10 @@
     [self disconnectPeripheral];
     result(@"Disconnected");
   } else if ([call.method isEqualToString:@"Print"]) {
+    if (self.centralManager.state != CBManagerStatePoweredOn) {
+      [self sendEvent:@{ @"type": @"bluetoothIsDisabled" }];
+      return;
+    }
     NSDictionary *args = call.arguments;
     NSString *type = args[@"PrintType"] ?: @"";
 #if TARGET_OS_SIMULATOR
@@ -114,38 +118,44 @@
 
 #pragma mark - 蓝牙相关方法
 - (void)startScan {
-  if (self.centralManager.state != CBManagerStatePoweredOn) {
-    if (self.eventSink) {
-      self.eventSink(@{ @"event": @"bluetooth_unavailable", @"state": @(self.centralManager.state) });
-    }
-    return;
-  }
   [self disconnectPeripheral];
   [self.discoveredPeripherals removeAllObjects];
   [self.advertisementDatas removeAllObjects];
   [self.RSSIs removeAllObjects];
+  if (self.centralManager.state == CBManagerStatePoweredOff) {
+    [self sendEvent:@{ @"type": @"bluetoothIsDisabled" }];
+    return;
+  }
   self.isScanning = YES;
   [self.centralManager scanForPeripheralsWithServices:nil options:nil];
-  if (self.eventSink) self.eventSink(@{ @"event": @"scan_started" });
+  [self sendEvent:@{ @"event": @"scan_started" }];
 }
 - (void)stopScan {
   [self.centralManager stopScan];
   self.isScanning = NO;
-  if (self.eventSink) self.eventSink(@{ @"event": @"scan_stopped" });
+  [self sendEvent:@{ @"event": @"scan_stopped" }];
 }
+
+// iOS获取不到设备mac，只能通过名字最后的macid来判断设备唯一性
 - (void)connectToDevice:(NSString *)deviceId {
+  if (self.centralManager.state != CBManagerStatePoweredOn) {
+    [self sendEvent:@{ @"type": @"bluetoothIsDisabled" }];
+    return;
+  }
   CBPeripheral *targetPeripheral = nil;
   for (NSInteger i = 0; i < self.discoveredPeripherals.count; i++) {
     CBPeripheral *peripheral = self.discoveredPeripherals[i];
     NSDictionary *advertisementData = self.advertisementDatas[i];
+    NSString *localName = advertisementData[CBAdvertisementDataLocalNameKey] ?: @"null";
+    NSString *macString = [[localName componentsSeparatedByString:@"-"] lastObject];
     NSString *localId = [[NSString alloc] initWithFormat:@"%@",[advertisementData[@"kCBAdvDataServiceUUIDs"] componentsJoinedByString:@","]];
-    if ([localId isEqualToString:deviceId]) {
+    if ([[NSString stringWithFormat:@"%@-%@", localId, macString] isEqualToString:deviceId]) {
       targetPeripheral = peripheral;
       break;
     }
   }
   if (!targetPeripheral) {
-    if (self.eventSink) self.eventSink(@{ @"type": @"blePeripheralDisconnected"});
+    [self sendEvent:@{ @"type": @"blePeripheralDisconnected"}];
     return;
   }
   if (self.isScanning) {
@@ -165,25 +175,24 @@
     [self.centralManager cancelPeripheralConnection:self.connectedPeripheral];
   }
 }
-- (void)sendPrintCommandWithSDK:(NSData *)data {
-  // 这里实现 SDK 打印命令的发送
-}
 
 #pragma mark - CBCentralManagerDelegate & CBPeripheralDelegate
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central {
   if (central.state == CBManagerStatePoweredOn) {
-    if (!self.isScanning) {
+//    if (!self.isScanning) {
       // 授权后自动重试扫描
       [self.centralManager scanForPeripheralsWithServices:nil options:nil];
-    }
-    if (self.eventSink) self.eventSink(@{ @"event": @"bluetooth_on" });
+//    }
+    [self sendEvent:@{ @"event": @"bluetooth_on" }];
   } else {
-    if (self.eventSink) self.eventSink(@{ @"event": @"bluetooth_off", @"state": @(central.state) });
+    [self sendEvent:@{ @"event": @"bluetooth_off", @"state": @(central.state) }];
   }
 }
+
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI {
     if ([RSSI integerValue]<-100 && [RSSI integerValue]>0) return;
     NSString *localName = advertisementData[CBAdvertisementDataLocalNameKey] ?: @"null";
+    NSString *macString = [[localName componentsSeparatedByString:@"-"] lastObject];
     NSString *localId = [[NSString alloc] initWithFormat:@"%@",[advertisementData[@"kCBAdvDataServiceUUIDs"] componentsJoinedByString:@","]];
     NSNumber *localRSSI = RSSI;
    if ([localName hasPrefix:@"POS"]) {
@@ -195,55 +204,68 @@
         [self.discoveredPeripherals addObject:peripheral];
         [self.advertisementDatas addObject:advertisementData];
         [self.RSSIs addObject:RSSI];
-        if (self.eventSink) {
-//            NSMutableArray *devices = [NSMutableArray array];
-//            for (NSInteger i = 0; i < self.discoveredPeripherals.count; i++) {
-//                CBPeripheral *itemPeripheral = self.discoveredPeripherals[i];
-//                NSDictionary *itemAdvertisementData = self.advertisementDatas[i];
-//                NSString *localName = itemAdvertisementData[CBAdvertisementDataLocalNameKey] ?: @"null";
-//                NSString *localId = [[NSString alloc] initWithFormat:@"%@",[itemAdvertisementData[@"kCBAdvDataServiceUUIDs"] componentsJoinedByString:@","]];
-//                NSNumber *localRSSI = self.RSSIs[i];
-//                [devices addObject:@{
-//                    @"id": localId ?: @"null",
-//                    @"name": itemPeripheral.name ?: localName,
-//                    @"rssi": localRSSI
-//                }];   
-//            }
-            self.eventSink(@{ @"type": @"DEVICES_FOUND", @"data": @{
-                @"address": localId ?: @"null",
-                @"name": localName ?: peripheral.name,
-                @"rssi": ([localRSSI isKindOfClass:[NSNumber class]] ? @([localRSSI intValue]) : @0)
-            }});
-        }
+        [self sendEvent:@{ @"type": @"DEVICES_FOUND", @"data": @{
+            @"address": [NSString stringWithFormat:@"%@-%@", localId, macString] ?: @"null",
+            @"name": localName ?: peripheral.name,
+            @"rssi": ([localRSSI isKindOfClass:[NSNumber class]] ? @([localRSSI intValue]) : @0)
+        }}];
     }
    }
 }
+
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral {
-  self.connectedPeripheral = peripheral;
-  peripheral.delegate = self;
-  [peripheral discoverServices:nil];
-  if (self.eventSink) self.eventSink(@{ @"type": @"BlePeripheralConnected"});
+    self.connectedPeripheral = peripheral;
+    peripheral.delegate = self;
+    [peripheral discoverServices:nil];
+    if ([self.discoveredPeripherals containsObject:peripheral]) {
+      NSInteger index = [self.discoveredPeripherals indexOfObject:peripheral];
+      NSDictionary *advertisementData = self.advertisementDatas[index];
+      NSString *localName = advertisementData[CBAdvertisementDataLocalNameKey] ?: @"null";
+      NSString *macString = [[localName componentsSeparatedByString:@"-"] lastObject];
+      NSString *localId = [[NSString alloc] initWithFormat:@"%@",[advertisementData[@"kCBAdvDataServiceUUIDs"] componentsJoinedByString:@","]];
+      [self sendEvent:@{ @"type": @"blePeripheralConnected", @"data": [NSString stringWithFormat:@"%@-%@", localId, macString]}];
+    }
 }
+
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {
-  if (self.eventSink) self.eventSink(@{ @"type": @"blePeripheralDisconnected"});
+    if ([self.discoveredPeripherals containsObject:peripheral]) {
+      NSInteger index = [self.discoveredPeripherals indexOfObject:peripheral];
+      NSDictionary *advertisementData = self.advertisementDatas[index];
+      NSString *localName = advertisementData[CBAdvertisementDataLocalNameKey] ?: @"null";
+      NSString *macString = [[localName componentsSeparatedByString:@"-"] lastObject];
+      NSString *localId = [[NSString alloc] initWithFormat:@"%@",[advertisementData[@"kCBAdvDataServiceUUIDs"] componentsJoinedByString:@","]];
+      [self sendEvent:@{ @"type": @"blePeripheralDisconnected", @"data": [NSString stringWithFormat:@"%@-%@", localId, macString]}];
+    }
+    self.connectedPeripheral = nil;
+    self.writeCharacteristic = nil;
 }
+
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {
-  if (self.eventSink) self.eventSink(@{ @"type": @"blePeripheralDisconnected"});
+  if ([self.discoveredPeripherals containsObject:peripheral]) {
+    NSInteger index = [self.discoveredPeripherals indexOfObject:peripheral];
+    NSDictionary *advertisementData = self.advertisementDatas[index];
+    NSString *localName = advertisementData[CBAdvertisementDataLocalNameKey] ?: @"null";
+    NSString *macString = [[localName componentsSeparatedByString:@"-"] lastObject];
+    NSString *localId = [[NSString alloc] initWithFormat:@"%@",[advertisementData[@"kCBAdvDataServiceUUIDs"] componentsJoinedByString:@","]];
+    [self sendEvent:@{ @"type": @"blePeripheralDisconnected", @"data": [NSString stringWithFormat:@"%@-%@", localId, macString]}];
+  }
   self.connectedPeripheral = nil;
   self.writeCharacteristic = nil;
 }
+
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error {
   if (error) {
-    if (self.eventSink) self.eventSink(@{ @"event": @"discover_services_failed", @"error": error.localizedDescription });
+    [self sendEvent:@{ @"event": @"discover_services_failed", @"error": error.localizedDescription }];
     return;
   }
   for (CBService *service in peripheral.services) {
     [peripheral discoverCharacteristics:nil forService:service];
   }
 }
+
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error {
   if (error) {
-    if (self.eventSink) self.eventSink(@{ @"event": @"discover_characteristics_failed", @"error": error.localizedDescription });
+    [self sendEvent:@{ @"event": @"discover_characteristics_failed", @"error": error.localizedDescription }];
     return;
   }
     NSLog(@"扫描到服务%@的%lu个特征", service.UUID.UUIDString, service.characteristics.count);
@@ -282,12 +304,27 @@
         }
     }
 }
+
 - (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error {
   if (error) {
     // 失败自动重试
 //      [self.connectedPeripheral writeValue:self.sendData forCharacteristic:self.writeCharacteristic type:CBCharacteristicWriteWithResponse];
   } else {
-    if (self.eventSink) self.eventSink(@{ @"event": @"write_success" });
+    [self sendEvent:@{ @"event": @"write_success" }];
   }
+}
+
+// 新增：统一事件发送方法
+- (void)sendEvent:(id)obj {
+    if (self.eventSink) {
+        NSError *error = nil;
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:obj options:0 error:&error];
+        if (!error && jsonData) {
+            NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+            self.eventSink(jsonString);
+        } else {
+            self.eventSink(@"{\"error\":\"json_serialization_failed\"}");
+        }
+    }
 }
 @end

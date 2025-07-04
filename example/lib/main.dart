@@ -21,7 +21,7 @@ class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _printerPlugin = PostekPrinterPlugin();
   List<DevicesBean> devices = [];
-  bool canPrint = false;
+  // bool canPrint = false;
 
   @override
   void initState() {
@@ -29,13 +29,16 @@ class _MyAppState extends State<MyApp> {
     initPlatformState();
 
     [
+      Permission.location,
       Permission.bluetooth,
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect
     ].request().then((result) {
       // Handle permissions result
       bool allGranted = result.values.every((status) => status.isGranted);
       if (allGranted) {
         // Start scanning when permissions are granted
-        _printerPlugin.scanDevices();
+        // _printerPlugin.scanDevices();
       } else {
         Fluttertoast.showToast(
           msg: "需要蓝牙权限来扫描设备",
@@ -62,80 +65,54 @@ class _MyAppState extends State<MyApp> {
 
     _printerPlugin.event.receiveBroadcastStream().listen(
       (event) {
-        // if (event is String) {
-        //   NotifyBean notify = NotifyBean.fromJson(event as String);
-        // switch (notify.type) {
-        //   case 'DEVICES_FOUND':
-        //     DevicesBean device = DevicesBean.fromJson(notify.data);
-        //     bool exist = devices.any((e) => e.address == device.address);
-        //     if (!exist) {
-        //       devices.add(device);
-        //       setState(() {});
-        //     }
-        //     break;
-        //   case 'BlePeripheralConnected':
-        //     print('BlePeripheralConnected: ${notify.data}');
-        //     Fluttertoast.showToast(
-        //       msg: "已连接打印机",
-        //       toastLength: Toast.LENGTH_SHORT,
-        //       gravity: ToastGravity.BOTTOM,
-        //       timeInSecForIosWeb: 1,
-        //       fontSize: 16.0,
-        //     );
-        //     setState(() {
-        //       canPrint = true;
-        //     });
-        //     break;
-        //   case 'blePeripheralDisconnected':
-        //     print('blePeripheralDisconnected: ${notify.data}');
-        //     break;
-        //   case 'sendPacketProgress':
-        //     print('sendPacketProgress: ${notify.data}');
-        //     break;
-        // }
-        // NotifyBean notify = NotifyBean.fromJson(event as String);
-        final type = event['type'];
-        final data = event['data'];
-        NotifyBean notify = NotifyBean(type: type, data: data);
-        switch (notify.type) {
-          case 'DEVICES_FOUND':
-            DevicesBean device = DevicesBean(
-                address: notify.data['address'],
-                name: notify.data['name'],
-                rssi: notify.data['rssi']);
-            bool exist = devices.any((e) => e.address == device.address);
-            if (!exist) {
+        if (event is String) {
+          NotifyBean notify = NotifyBean.fromJson(event);
+          switch (notify.type) {
+            case 'DEVICES_FOUND':
+              DevicesBean device = DevicesBean.fromJson(notify.data);
+              bool exist = devices.any((e) => e.address == device.address);
+              if (!exist) {
+                setState(() {
+                  devices.add(device);
+                });
+              }
+              break;
+            case 'blePeripheralConnected':
+              print('blePeripheralConnected: ${notify.data}');
               setState(() {
-                devices.add(device);
+                devices
+                    .firstWhere((e) => e.address == notify.data)
+                    .isConnected = true;
               });
-            }
-            break;
-          case 'BlePeripheralConnected':
-            print('BlePeripheralConnected: ${notify.data}');
-            Fluttertoast.showToast(
-              msg: "打印机已连接",
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.BOTTOM,
-            );
-            setState(() {
-              canPrint = true;
-            });
-            break;
-          case 'blePeripheralDisconnected':
-            print('blePeripheralDisconnected: ${notify.data}');
-            setState(() {
-              canPrint = false;
-            });
-            Fluttertoast.showToast(
-              msg: "打印机已断开连接",
-              toastLength: Toast.LENGTH_SHORT,
-            );
-            break;
-          case 'sendPacketProgress':
-            print('sendPacketProgress: ${notify.data}');
-            break;
+              Fluttertoast.showToast(
+                msg: "打印机已连接",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+              );
+              break;
+            case 'blePeripheralDisconnected':
+              print('blePeripheralDisconnected: ${notify.data}');
+              setState(() {
+                devices
+                    .firstWhere((e) => e.address == notify.data)
+                    .isConnected = false;
+              });
+              Fluttertoast.showToast(
+                msg: "打印机已断开连接",
+                toastLength: Toast.LENGTH_SHORT,
+              );
+              break;
+            case 'sendPacketProgress':
+              print('sendPacketProgress: ${notify.data}');
+              break;
+            case 'bluetoothIsDisabled':
+              Fluttertoast.showToast(
+                msg: "蓝牙已关闭,请打开蓝牙",
+                toastLength: Toast.LENGTH_SHORT,
+              );
+              break;
+          }
         }
-        // }
       },
       onError: (error) {
         print('Error: $error');
@@ -148,6 +125,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _printSampleText() {
+    bool canPrint = devices.any((e) => e.isConnected);
     if (!canPrint) {
       Fluttertoast.showToast(
         msg: "请先连接打印机",
@@ -180,7 +158,8 @@ class _MyAppState extends State<MyApp> {
                   });
                   _printerPlugin.scanDevices();
                 }),
-                if (canPrint) _buildButton("打印测试", _printSampleText),
+                if (devices.any((e) => e.isConnected))
+                  _buildButton("打印测试", _printSampleText),
               ],
             ),
             Expanded(
@@ -200,7 +179,7 @@ class _MyAppState extends State<MyApp> {
                             _printerPlugin.connectDevices(device.address!);
                           }
                         },
-                        child: Text(canPrint ? "已连接" : "连接"),
+                        child: Text(device.isConnected ? "已连接" : "连接"),
                       ),
                     ),
                   );
