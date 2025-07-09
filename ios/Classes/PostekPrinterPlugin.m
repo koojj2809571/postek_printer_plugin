@@ -4,6 +4,7 @@
 #import "PTKPrintSDK.h"
 #import "MyPcxImageConverter.h"
 #import "PrintFixedAssets.h"
+#import "PrintMaterialOrder.h"
 
 @interface PostekPrinterPlugin() <FlutterStreamHandler, CBCentralManagerDelegate, CBPeripheralDelegate>
 @property (nonatomic, strong) CBCentralManager *centralManager;
@@ -86,15 +87,17 @@
     }
     NSDictionary *args = call.arguments;
     NSString *type = args[@"PrintType"] ?: @"";
+    NSDictionary *data = args[@"PrintData"] ?: @{};
 #if TARGET_OS_SIMULATOR
     NSLog(@"PTKPrintSDK 不支持模拟器");
     result(@"PTKPrintSDK 不支持模拟器");
 #else
     if ([type isEqualToString:@"FixedAssets"]) {
-        [PrintFixedAssets printWithSDK:self.ptkSDk];
+        [PrintFixedAssets printWithSDK:self.ptkSDk data:data];
         result(@"Printed FixedAssets");
     } else if ([type isEqualToString:@"MaterialOrder"]) {
         // Handle MaterialOrder print type
+        [PrintMaterialOrder printWithSDK:self.ptkSDk data:data];
     } else if ([type isEqualToString:@"MultipleColumn"]) {
         // Handle MultipleColumn print type
     } else {

@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 @class PTKPrintSDK;
 
-@interface PrintFixedAssets : NSObject
+@interface PrintMaterialOrder : NSObject
 + (void)printWithSDK:(PTKPrintSDK *)sdk data:(NSDictionary *)data;
 @end

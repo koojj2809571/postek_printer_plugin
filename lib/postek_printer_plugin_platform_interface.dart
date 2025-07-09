@@ -1,7 +1,6 @@
 part of 'postek_printer_plugin.dart';
 
 abstract class PostekPlatform extends PlatformInterface {
-
   PostekPlatform() : super(token: _token);
 
   static final Object _token = Object();
@@ -33,7 +32,7 @@ abstract class PostekPlatform extends PlatformInterface {
     throw UnimplementedError('connectDevices() has not been implemented.');
   }
 
-  Future<void> print(String printType) {
+  Future<void> print(String printType, Map<String, dynamic> printData) {
     throw UnimplementedError('connectDevices() has not been implemented.');
   }
 }

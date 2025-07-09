@@ -31,10 +31,10 @@ class PostekPlugin extends PostekPlatform {
   }
 
   @override
-  Future<void> print(String printType) {
+  Future<void> print(String printType, Map<String, dynamic> printData) {
     return methodChannel.invokeMethod<void>(
       "Print",
-      {'PrintType': printType},
+      {'PrintType': printType, 'PrintData': printData},
     );
   }
 

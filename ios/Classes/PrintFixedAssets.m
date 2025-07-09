@@ -3,7 +3,7 @@
 
 @implementation PrintFixedAssets
 
-+ (void)printWithSDK:(PTKPrintSDK *)sdk {
++ (void)printWithSDK:(PTKPrintSDK *)sdk data:(NSDictionary *)data {
     int mm = 8;
     int result = 0;
 
@@ -44,8 +44,8 @@
     result = [sdk PTKPrintLabel:1 andCPNum:1];
     if (result != PTK_SUCCESS) return;
     // 切纸
-    result = [sdk PTKCutPage:1];
-    if (result != PTK_SUCCESS) return;
+    // result = [sdk PTKCutPage:1];
+    // if (result != PTK_SUCCESS) return;
 //    result = [sdk PTKPrint];
 //    if (result != 0) return;
     

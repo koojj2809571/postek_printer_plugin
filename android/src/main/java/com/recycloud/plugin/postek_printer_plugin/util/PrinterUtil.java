@@ -72,7 +72,7 @@ public class PrinterUtil {
         setCallback();
     }
 
-    public void print(String printType){
+    public void print(String printType, Map<String, String> printData){
         if (!isBluetoothEnabled()) {
             sink.success(getResultStr("bluetoothIsDisabled"));
             return;
@@ -83,7 +83,7 @@ public class PrinterUtil {
                 printer = new PrintFixedAssets();
                 break;
             case "MaterialOrder":
-                printer = new PrintMaterialOrder();
+                printer = new PrintMaterialOrder(printData);
                 break;
             case "MultipleColumn":
                 printer = new PrintMultipleColumn();

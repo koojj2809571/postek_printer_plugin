@@ -13,7 +13,6 @@ part 'bean/devices_bean.dart';
 part 'bean/devices_bean.g.dart';
 
 class PostekPrinterPlugin {
-
   EventChannel get event => PostekPlatform.instance.event;
 
   Future<String?> getPlatformVersion() {
@@ -32,7 +31,7 @@ class PostekPrinterPlugin {
     return PostekPlatform.instance.disconnected();
   }
 
-  Future<void> print(String printType) {
-    return PostekPlatform.instance.print(printType);
+  Future<void> print(String printType, Map<String, dynamic> printData) {
+    return PostekPlatform.instance.print(printType, printData);
   }
 }

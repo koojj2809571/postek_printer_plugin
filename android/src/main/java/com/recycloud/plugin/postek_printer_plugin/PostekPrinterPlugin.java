@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import com.recycloud.plugin.postek_printer_plugin.util.BluetoothUtil;
 import com.recycloud.plugin.postek_printer_plugin.util.PrinterUtil;
 
+import java.util.Map;
+
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -70,7 +72,8 @@ public class PostekPrinterPlugin implements FlutterPlugin, MethodCallHandler, Ac
         printerUtil.disconnected();
         break;
       case "Print":
-        printerUtil.print(call.argument("PrintType"));
+        Map<String, String> printData = (Map<String, String>)call.argument("PrintData");
+        printerUtil.print(call.argument("PrintType"), printData);
         break;
       default:
         result.notImplemented();

@@ -6,7 +6,6 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockPostekPrinterPluginPlatform
     with MockPlatformInterfaceMixin
     implements PostekPlatform {
-
   @override
   Future<String?> getPlatformVersion() => Future.value('42');
 
@@ -23,7 +22,7 @@ class MockPostekPrinterPluginPlatform
   }
 
   @override
-  Future<void> print(String printType) {
+  Future<void> print(String printType, Map<String, dynamic> printData) {
     // TODO: implement print
     throw UnimplementedError();
   }
@@ -48,7 +47,8 @@ void main() {
 
   test('getPlatformVersion', () async {
     PostekPrinterPlugin postekPrinterPlugin = PostekPrinterPlugin();
-    MockPostekPrinterPluginPlatform fakePlatform = MockPostekPrinterPluginPlatform();
+    MockPostekPrinterPluginPlatform fakePlatform =
+        MockPostekPrinterPluginPlatform();
     PostekPlatform.instance = fakePlatform;
 
     expect(await postekPrinterPlugin.getPlatformVersion(), '42');

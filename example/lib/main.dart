@@ -134,8 +134,16 @@ class _MyAppState extends State<MyApp> {
       return;
     }
 
-    // 打印示例文本
-    _printerPlugin.print("FixedAssets");
+    // 打印发动机总成回用件标签示例
+    _printerPlugin.print("MaterialOrder", {
+      "code": "845961254784512547", // 回用件编码
+      "disassembleTime": "2025-06-25 15:28:00", // 拆解时间
+      "carNumber": "京MPV968", // 报废车辆号
+      "brandSeries": "荣威-荣威Ei5", // 报废品牌车系
+      "carType": "小型/小型客车/轿车", // 报废车型
+      "vin": "KNS16B12ID2312I3E213", // 车辆VIN码
+      "qrContent": "845961254784512547", // 二维码内容（通常与回用件编码一致）
+    });
   }
 
   @override
