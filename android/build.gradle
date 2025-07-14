@@ -16,13 +16,13 @@ rootProject.allprojects {
     repositories {
         google()
         mavenCentral()
-        maven {
-            credentials {
-                username '658cce5caeb9ae60f1af8e12'
-                password 'lyy]dwH9Kt-k'
-            }
-            url 'https://packages.aliyun.com/maven/repository/2167292-release-B3TpYx'
-        }
+//        maven {
+//            credentials {
+//                username '658cce5caeb9ae60f1af8e12'
+//                password 'lyy]dwH9Kt-k'
+//            }
+//            url 'https://packages.aliyun.com/maven/repository/2167292-release-B3TpYx'
+//        }
     }
 }
 
@@ -45,11 +45,10 @@ android {
     }
 
     dependencies {
+        implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
         testImplementation("junit:junit:4.13.2")
         testImplementation("org.mockito:mockito-core:5.0.0")
-        api('com.postek.cdfpsk:CDFPSKAndroid:1.0.0')
         implementation('com.google.code.gson:gson:2.11.0')
-
     }
 
     testOptions {
