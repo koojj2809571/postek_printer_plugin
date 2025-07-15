@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.postek.cdfpsk.CDFPTKAndroid;
 import com.postek.cdfpsk.CDFPTKAndroidImpl;
 import com.postek.cdfpsk.bleCallback;
+import com.postek.cdfpsk.sppCallback;
 import com.recycloud.plugin.postek_printer_plugin.model.PrinterRow;
 import com.recycloud.plugin.postek_printer_plugin.template.IPrintTemplate;
 import com.recycloud.plugin.postek_printer_plugin.template.impl.PrintFixedAssets;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.flutter.Log;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -68,8 +70,8 @@ public class PrinterUtil {
             return;
         }
         cdf.PTK_DisConnectBle();
-        cdf.PTK_StartScan();
         setCallback();
+        cdf.PTK_StartScan();
     }
 
     public void print(String printType, Map<String, String> printData){
@@ -131,17 +133,35 @@ public class PrinterUtil {
     }
 
     private void setCallback() {
-        cdf.setCallbacks(new bleCallback() {
+        cdf.setCallbacks_BLE(new bleCallback() {
             @Override
             public void blePeripheralFound(FscDevice fscDevice, int i, byte[] bytes) {
                 if (fscDevice.getRssi() == 127) return;
                 try {
-                    if (fscDevice.getName().contains("POSTEK")) {
-                        sink.success(getResultStr("DEVICES_FOUND", fscDevice));
+                    if (fscDevice.getName().contains("POSTEK") && fscDevice.getAddress().contains("DC:0D:30") || fscDevice.getAddress().contains("DD:0D:30")) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.e("Tag","-------"+fscDevice.getName());
+                                sink.success(getResultStr("DEVICES_FOUND", fscDevice));
+                            }
+                        });
+
                     }
                 } catch (NullPointerException ignored) {
 
                 }
+//                try {
+//                    //Log.e("Tag",fscDevice.getName());
+//                    if (fscDevice.getAddress().contains("DC:0D:30") || fscDevice.getAddress().contains("DD:0D:30")) {
+//                Log.e("Tag","-------"+fscDevice.getName());
+////                        AddDevice(fscDevice);
+////                        sink.success(getResultStr("DEVICES_FOUND", fscDevice));
+//
+//                    }
+//                } catch (NullPointerException ignored) {
+//
+//                }
             }
 
             @Override
@@ -167,6 +187,24 @@ public class PrinterUtil {
                 activity.runOnUiThread(() -> {
                     sink.success(getResultStr("sendPacketProgress", percentage));
                 });
+            }
+        });
+
+        cdf.setCallbacks_SPP(new sppCallback() {
+            @Override
+            public void sppPeripheralFound(FscDevice fscDevice, int i) {
+//                uiFoundDevice(fscDevice);
+                try {
+                    //Log.e("Tag",fscDevice.getName());
+                    if (fscDevice.getAddress().contains("DC:0D:30") || fscDevice.getAddress().contains("DD:0D:30")) {
+                        Log.e("Tag","1-------"+fscDevice.getName());
+//                        AddDevice(fscDevice);
+//                        sink.success(getResultStr("DEVICES_FOUND", fscDevice));
+
+                    }
+                } catch (NullPointerException ignored) {
+
+                }
             }
         });
     }
