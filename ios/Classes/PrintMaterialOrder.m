@@ -117,7 +117,7 @@
     // 打印二维码
     int qrX = 80 + offset_X;
     int qrY = (startY + idx * gapY) + 80 + offset_Y;
-    result = [sdk PTK_DrawBar2D_QR:qrX andY:qrY andW:30 andV:0 andO:0 andR:8 andM:4 andG:0 andS:8 andStr:qrContent];
+    result = [sdk PTK_DrawBar2D_QR:qrX andY:qrY andW:30 andV:1 andO:0 andR:6 andM:4 andG:0 andS:8 andStr:qrContent];
     if (result != PTK_SUCCESS) return result;
 
     // 打印提示
