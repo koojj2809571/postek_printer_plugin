@@ -142,7 +142,8 @@ class _MyAppState extends State<MyApp> {
       "brandSeries": "荣威-荣威Ei5", // 报废品牌车系
       "carType": "小型/小型客车/轿车", // 报废车型
       "vin": "KNS16B12ID2312I3E213", // 车辆VIN码
-      "qrContent": "845961254784512547", // 二维码内容（通常与回用件编码一致）
+      "qrContent":
+          "recycloud-cyclePartDetail?id=845961254784512547", // 二维码内容（通常与回用件编码一致）
     });
   }
 

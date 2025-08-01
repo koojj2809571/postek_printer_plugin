@@ -120,7 +120,7 @@ public class PrintMaterialOrder implements IPrintTemplate {
         // 打印二维码（假设有二维码API，参数可调整）
         int qrX = 80 + offset_X;
         int qrY = (startY + idx * gapY) + 80 + offset_Y;
-        cdf.PTK_DrawBar2D_QR(qrX, qrY, 30, 0, 0, 8, 4, 0, 8, qrContent);
+        cdf.PTK_DrawBar2D_QR(qrX, qrY, 30, 1, 0, 6, 4, 0, 8, qrContent);
 
         // 打印提示
         result_printing = cdf.PTK_DrawText_TrueType((int)(280 + offset_X), (int)(qrY + 120), 28, "serif", 1, 4, false, false, false, "N", "扫一扫查看回用件详情");

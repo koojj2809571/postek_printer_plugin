@@ -30,12 +30,12 @@ public class BluetoothUtil {
      *
      * @return true：强制打开 Bluetooth　成功　false：强制打开 Bluetooth 失败
      */
-    public static boolean turnOnBluetooth() {
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter != null) {
-            return bluetoothAdapter.enable();
-        }
-        return false;
-    }
+    // public static boolean turnOnBluetooth() {
+    //     BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    //     if (bluetoothAdapter != null) {
+    //         return bluetoothAdapter.enable();
+    //     }
+    //     return false;
+    // }
 
 }
