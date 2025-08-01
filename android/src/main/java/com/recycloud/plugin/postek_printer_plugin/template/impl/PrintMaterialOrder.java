@@ -68,62 +68,62 @@ public class PrintMaterialOrder implements IPrintTemplate {
         String qrContent = data != null && data.containsKey("qrContent") ? data.get("qrContent") : code;
 
         // 打印外框
-        result_printing = cdf.PTK_DrawRectangle((int)(20 + offset_X), (int)(20 + offset_Y), 4, 780, 620 + offset_Y);
-        if (result_printing != 0) return result_printing;
+        // result_printing = cdf.PTK_DrawRectangle((int)(20 + offset_X), (int)(20 + offset_Y), 4, 780, 620 + offset_Y);
+        // if (result_printing != 0) return result_printing;
 
         // 打印标题
-        result_printing = cdf.PTK_DrawText_TrueType((int)(300 + offset_X), (int)(40 + offset_Y), 40, "serif", 1, 1, false, false, false, "N", "发动机总成");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(80 + offset_X), (int)(30 + offset_Y), 30, "serif", 1, 1, false, false, false, "N", "发动机总成");
         if (result_printing != 0) return result_printing;
 
-        int leftX = 120 + offset_X;
+        int leftX = 80 + offset_X;
         int valueX = 340 + offset_X;
-        int startY = 120 + offset_Y;
+        int startY = 30 + 45 + 40 + offset_Y;
         int gapY = 40;
         int idx = 0;
 
         // 回用件编码
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", "回用件编码:");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "回用件编码:  " + code);
         if (result_printing != 0) return result_printing;
-        result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", code);
-        if (result_printing != 0) return result_printing;
+        // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", code);
+        // if (result_printing != 0) return result_printing;
         idx++;
         // 拆解时间
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", "拆解时间:");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "拆解时间:  " + disassembleTime);
         if (result_printing != 0) return result_printing;
-        result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", disassembleTime);
-        if (result_printing != 0) return result_printing;
+        // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", disassembleTime);
+        // if (result_printing != 0) return result_printing;
         idx++;
         // 报废车辆号
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", "报废车辆号:");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废车辆号:  " + carNumber);
         if (result_printing != 0) return result_printing;
-        result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", carNumber);
-        if (result_printing != 0) return result_printing;
+        // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", carNumber);
+        // if (result_printing != 0) return result_printing;
         idx++;
         // 报废品牌车系
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", "报废品牌车系:");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废品牌车系:  " + brandSeries);
         if (result_printing != 0) return result_printing;
-        result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", brandSeries);
-        if (result_printing != 0) return result_printing;
+        // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", brandSeries);
+        // if (result_printing != 0) return result_printing;
         idx++;
         // 报废车型
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", "报废车型:");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废车型:  " + carType);
         if (result_printing != 0) return result_printing;
-        result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", carType);
-        if (result_printing != 0) return result_printing;
+        // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", carType);
+        // if (result_printing != 0) return result_printing;
         idx++;
         // 车辆VIN码
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", "车辆VIN码:");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "车辆VIN码:  " + vin);
         if (result_printing != 0) return result_printing;
-        result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 24, "serif", 1, 4, false, false, false, "N", vin);
-        if (result_printing != 0) return result_printing;
+        // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", vin);
+        // if (result_printing != 0) return result_printing;
 
         // 打印二维码（假设有二维码API，参数可调整）
-        int qrX = 120 + offset_X;
-        int qrY = 380 + offset_Y;
-        cdf.PTK_DrawBar2D_QR(qrX, qrY, 80, 0, 0, 8, 4, 0, 8, qrContent);
+        int qrX = 80 + offset_X;
+        int qrY = (startY + idx * gapY) + 80 + offset_Y;
+        cdf.PTK_DrawBar2D_QR(qrX, qrY, 30, 0, 0, 8, 4, 0, 8, qrContent);
 
         // 打印提示
-        result_printing = cdf.PTK_DrawText_TrueType((int)(350 + offset_X), (int)(500 + offset_Y), 24, "serif", 1, 4, false, false, false, "N", "扫一扫查看回用件详情");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(280 + offset_X), (int)(qrY + 120), 28, "serif", 1, 4, false, false, false, "N", "扫一扫查看回用件详情");
         if (result_printing != 0) return result_printing;
 
         return 0;

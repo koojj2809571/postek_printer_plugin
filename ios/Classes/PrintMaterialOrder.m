@@ -63,65 +63,65 @@
     NSString *qrContent = data[@"qrContent"] ?: code;
 
     // 打印外框
-    result = [sdk PTKDrawRectangle:20+offset_X andPy:20+offset_Y andThickness:4 andEx:780 andEy:620+offset_Y];
-    if (result != PTK_SUCCESS) return result;
+    // result = [sdk PTKDrawRectangle:20+offset_X andPy:20+offset_Y andThickness:4 andEx:780 andEy:620+offset_Y];
+    // if (result != PTK_SUCCESS) return result;
 
     // 打印标题（居中）
-    result = [sdk PTKDrawText:300+offset_X andPy:40+offset_Y andDirec:0 andFont:'6' andHorizontal:2 andVertical:2 andText:'N' andStr:@"发动机总成"];
+    result = [sdk PTKDrawText:80+offset_X andPy:30+offset_Y andDirec:0 andFont:'6' andHorizontal:2 andVertical:2 andText:'N' andStr:@"发动机总成"];
     if (result != PTK_SUCCESS) return result;
 
     // 打印字段内容
-    int leftX = 120 + offset_X;
+    int leftX = 80 + offset_X;
     int valueX = 340 + offset_X;
     // int lineH = 50;
-    int startY = 120 + offset_Y;
+    int startY = 30 + 45 + 40 + offset_Y;
     int gapY = 40;
     int idx = 0;
 
     // 回用件编码
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:@"回用件编码:"];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"回用件编码:  %@", code]];
     if (result != PTK_SUCCESS) return result;
-    result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'3' andHorizontal:1 andVertical:1 andText:'N' andStr:code];
-    if (result != PTK_SUCCESS) return result;
+    // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'3' andHorizontal:1 andVertical:1 andText:'N' andStr:code];
+    // if (result != PTK_SUCCESS) return result;
     idx++;
     // 拆解时间
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:@"拆解时间:"];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"拆解时间:  %@", disassembleTime]];
     if (result != PTK_SUCCESS) return result;
-    result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:disassembleTime];
-    if (result != PTK_SUCCESS) return result;
+    // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:disassembleTime];
+    // if (result != PTK_SUCCESS) return result;
     idx++;
     // 报废车辆号
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:@"报废车辆号:"];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废车辆号:  %@", carNumber]];
     if (result != PTK_SUCCESS) return result;
-    result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:carNumber];
-    if (result != PTK_SUCCESS) return result;
+    // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:carNumber];
+    // if (result != PTK_SUCCESS) return result;
     idx++;
     // 报废品牌车系
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:@"报废品牌车系:"];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废品牌车系:  %@", brandSeries]];
     if (result != PTK_SUCCESS) return result;
-    result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:brandSeries];
-    if (result != PTK_SUCCESS) return result;
+    // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:brandSeries];
+    // if (result != PTK_SUCCESS) return result;
     idx++;
     // 报废车型
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:@"报废车型:"];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废车型:  %@", carType]];
     if (result != PTK_SUCCESS) return result;
-    result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:carType];
-    if (result != PTK_SUCCESS) return result;
+    // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:carType];
+    // if (result != PTK_SUCCESS) return result;
     idx++;
     // 车辆VIN码
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:@"车辆VIN码:"];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"车辆VIN码:  %@", vin]];
     if (result != PTK_SUCCESS) return result;
-    result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:vin];
-    if (result != PTK_SUCCESS) return result;
+    // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:vin];
+    // if (result != PTK_SUCCESS) return result;
 
     // 打印二维码
-    int qrX = 120 + offset_X;
-    int qrY = 380 + offset_Y;
-    result = [sdk PTK_DrawBar2D_QR:qrX andY:qrY andW:80 andV:0 andO:0 andR:8 andM:4 andG:0 andS:8 andStr:qrContent];
+    int qrX = 80 + offset_X;
+    int qrY = (startY + idx * gapY) + 80 + offset_Y;
+    result = [sdk PTK_DrawBar2D_QR:qrX andY:qrY andW:30 andV:0 andO:0 andR:8 andM:4 andG:0 andS:8 andStr:qrContent];
     if (result != PTK_SUCCESS) return result;
 
     // 打印提示
-    result = [sdk PTKDrawText:350+offset_X andPy:500+offset_Y andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:@"扫一扫查看回用件详情"];
+    result = [sdk PTKDrawText:280+offset_X andPy:qrY+120 andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:@"扫一扫查看回用件详情"];
     if (result != PTK_SUCCESS) return result;
 
     return PTK_SUCCESS;
