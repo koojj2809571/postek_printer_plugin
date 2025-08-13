@@ -54,6 +54,7 @@
     int offset_Y = 0 + y;
 
     // 示例字段名
+    NSString *name = data[@"name"] ?: @"";
     NSString *code = data[@"code"] ?: @"";
     NSString *disassembleTime = data[@"disassembleTime"] ?: @"";
     NSString *carNumber = data[@"carNumber"] ?: @"";
@@ -67,7 +68,7 @@
     // if (result != PTK_SUCCESS) return result;
 
     // 打印标题（居中）
-    result = [sdk PTKDrawText:80+offset_X andPy:30+offset_Y andDirec:0 andFont:'6' andHorizontal:2 andVertical:2 andText:'N' andStr:@"发动机总成"];
+    result = [sdk PTKDrawText:80+offset_X andPy:30+offset_Y andDirec:0 andFont:'6' andHorizontal:1.5 andVertical:1.5 andText:'N' andStr:name];
     if (result != PTK_SUCCESS) return result;
 
     // 打印字段内容

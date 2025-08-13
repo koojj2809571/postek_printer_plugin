@@ -59,6 +59,7 @@ public class PrintMaterialOrder implements IPrintTemplate {
         int offset_Y = 0 + y;
 
         // 为了兼容性更好，避免使用 Java 8 的 Map.getOrDefault，可以这样写：
+        String name = data != null && data.containsKey("name") ? data.get("name") : "";
         String code = data != null && data.containsKey("code") ? data.get("code") : "";
         String disassembleTime = data != null && data.containsKey("disassembleTime") ? data.get("disassembleTime") : "";
         String carNumber = data != null && data.containsKey("carNumber") ? data.get("carNumber") : "";
@@ -72,7 +73,7 @@ public class PrintMaterialOrder implements IPrintTemplate {
         // if (result_printing != 0) return result_printing;
 
         // 打印标题
-        result_printing = cdf.PTK_DrawText_TrueType((int)(80 + offset_X), (int)(30 + offset_Y), 30, "serif", 1, 1, false, false, false, "N", "发动机总成");
+        result_printing = cdf.PTK_DrawText_TrueType((int)(80 + offset_X), (int)(30 + offset_Y), 30, "serif", 1, 1, false, false, false, "N", name);
         if (result_printing != 0) return result_printing;
 
         int leftX = 80 + offset_X;
