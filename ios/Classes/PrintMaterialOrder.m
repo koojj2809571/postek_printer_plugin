@@ -92,19 +92,19 @@
     // if (result != PTK_SUCCESS) return result;
     idx++;
     // 报废车辆号
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废车辆号:  %@", carNumber]];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废车车牌号:  %@", carNumber]];
     if (result != PTK_SUCCESS) return result;
     // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:carNumber];
     // if (result != PTK_SUCCESS) return result;
     idx++;
     // 报废品牌车系
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废品牌车系:  %@", brandSeries]];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废车品牌车系:  %@", brandSeries]];
     if (result != PTK_SUCCESS) return result;
     // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:brandSeries];
     // if (result != PTK_SUCCESS) return result;
     idx++;
     // 报废车型
-    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废车型:  %@", carType]];
+    result = [sdk PTKDrawText:leftX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:[NSString stringWithFormat:@"报废车类型:  %@", carType]];
     if (result != PTK_SUCCESS) return result;
     // result = [sdk PTKDrawText:valueX andPy:startY+idx*gapY andDirec:0 andFont:'6' andHorizontal:1 andVertical:1 andText:'N' andStr:carType];
     // if (result != PTK_SUCCESS) return result;

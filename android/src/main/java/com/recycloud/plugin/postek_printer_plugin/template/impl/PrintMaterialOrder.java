@@ -95,19 +95,19 @@ public class PrintMaterialOrder implements IPrintTemplate {
         // if (result_printing != 0) return result_printing;
         idx++;
         // 报废车辆号
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废车辆号:  " + carNumber);
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废车车牌号:  " + carNumber);
         if (result_printing != 0) return result_printing;
         // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", carNumber);
         // if (result_printing != 0) return result_printing;
         idx++;
         // 报废品牌车系
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废品牌车系:  " + brandSeries);
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废车品牌车系:  " + brandSeries);
         if (result_printing != 0) return result_printing;
         // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", brandSeries);
         // if (result_printing != 0) return result_printing;
         idx++;
         // 报废车型
-        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废车型:  " + carType);
+        result_printing = cdf.PTK_DrawText_TrueType((int)(leftX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", "报废车类型:  " + carType);
         if (result_printing != 0) return result_printing;
         // result_printing = cdf.PTK_DrawText_TrueType((int)(valueX), (int)(startY + idx * gapY), 26, "serif", 1, 4, false, false, false, "N", carType);
         // if (result_printing != 0) return result_printing;
