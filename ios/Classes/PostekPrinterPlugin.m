@@ -76,7 +76,7 @@
     } else {
       result([FlutterError errorWithCode:@"INVALID_ARGS" message:@"Device ID not provided" details:nil]);
     }
-  } else if ([call.method isEqualToString:@"disconnected"]) {
+  } else if ([call.method isEqualToString:@"Disconnected"]) {
     [self ensureCentralManagerInitialized];
     [self disconnectPeripheral];
     result(@"Disconnected");
