@@ -40,117 +40,286 @@ import android.os.Handler;
 
 public class PrinterUtil {
     private final Activity activity;
-    private final CDFPTKAndroid cdf;
+    private CDFPTKAndroid cdf; // Remove final to allow reinitialization
     private final List<List<PrinterRow>> printData = new ArrayList<>();
     private final EventChannel.EventSink sink;
 
     private final BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-
-            int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
-
-            if (blueState == BluetoothAdapter.STATE_ON) {
-                // 开关蓝牙后，要停止扫瞄不然会导致无法立刻扫瞄到设备
-                cdf.PTK_StopScan();
+            try {
+                int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
+                handleBluetoothStateChange(blueState);
+            } catch (Exception e) {
+                Log.e("PrinterUtil", "Error in broadcast receiver: " + e.getMessage());
             }
         }
     };
 
     public PrinterUtil(Activity activity, EventChannel.EventSink sink) {
         this.activity = activity;
-        cdf = new CDFPTKAndroidImpl(activity);
         this.sink = sink;
-        initReceive();
+        this.cdf = null; // Initialize to null first
+        
+        try {
+            if (activity != null) {
+                this.cdf = new CDFPTKAndroidImpl(activity);
+                initReceive();
+            } else {
+                Log.e("PrinterUtil", "Activity is null, cannot initialize printer");
+            }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error initializing printer: " + e.getMessage());
+            this.cdf = null; // Ensure it's null on error
+        }
     }
 
     public void scanDevices(){
         if (!isBluetoothEnabled()) {
-            sink.success(getResultStr("bluetoothIsDisabled"));
+            safeSendResult("bluetoothIsDisabled");
             return;
         }
-        cdf.PTK_DisConnectBle();
-        setCallback();
-        cdf.PTK_StartScan();
+        if (this.cdf == null) {
+            safeSendResult("printerNotInitialized");
+            return;
+        }
+        try {
+            this.cdf.PTK_DisConnectBle();
+            setCallback();
+            this.cdf.PTK_StartScan();
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error scanning devices: " + e.getMessage());
+            safeSendResult("scanError", e.getMessage());
+        }
     }
 
     public void print(String printType, Map<String, String> printData){
         if (!isBluetoothEnabled()) {
-            sink.success(getResultStr("bluetoothIsDisabled"));
+            safeSendResult("bluetoothIsDisabled");
             return;
         }
-        IPrintTemplate printer = null;
-        switch (printType){
-            case "FixedAssets":
-                printer = new PrintFixedAssets();
-                break;
-            case "MaterialOrder":
-                printer = new PrintMaterialOrder(printData);
-                break;
-            case "MultipleColumn":
-                printer = new PrintMultipleColumn();
-                break;
+        if (this.cdf == null) {
+            safeSendResult("printerNotInitialized");
+            return;
         }
-        if (printer != null) {
-            printer.print(cdf);
+        try {
+            IPrintTemplate printer = null;
+            switch (printType){
+                case "FixedAssets":
+                    printer = new PrintFixedAssets();
+                    break;
+                case "MaterialOrder":
+                    printer = new PrintMaterialOrder(printData);
+                    break;
+                case "MultipleColumn":
+                    printer = new PrintMultipleColumn();
+                    break;
+            }
+            if (printer != null) {
+                printer.print(this.cdf);
+            }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error printing: " + e.getMessage());
+            safeSendResult("printError", e.getMessage());
         }
     }
 
     public void connectedBLE(MethodCall call){
         if (!isBluetoothEnabled()) {
-            sink.success(getResultStr("bluetoothIsDisabled"));
+            safeSendResult("bluetoothIsDisabled");
             return;
         }
-        String address = call.argument("Address");
-        if (isDeviceConnected(address)) {
+        if (this.cdf == null) {
+            safeSendResult("printerNotInitialized");
+            return;
+        }
+        try {
+            String address = call.argument("Address");
+            if (isDeviceConnected(address)) {
 //            cdf.PTK_DisConnectBle();
-            sink.success(getResultStr("blePeripheralConnected"));
-        }else {
-            cdf.PTK_ConnectBle(address);
+                safeSendResult("blePeripheralConnected");
+            }else {
+                this.cdf.PTK_ConnectBle(address);
+            }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error connecting to BLE: " + e.getMessage());
+            safeSendResult("connectionError", e.getMessage());
+        }
+    }
+
+    public void cleanup() {
+        try {
+            if (this.cdf != null) {
+                this.cdf.PTK_DisConnectBle();
+                this.cdf.PTK_StopScan();
+            }
+            if (activity != null) {
+                try {
+                    activity.unregisterReceiver(myBroadcastReceiver);
+                } catch (IllegalArgumentException e) {
+                    // Receiver was not registered, ignore
+                }
+            }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error during cleanup: " + e.getMessage());
         }
     }
 
     public void disconnected(){
-        cdf.PTK_DisConnectBle();
-        activity.unregisterReceiver(myBroadcastReceiver);
-        cdf.PTK_StopScan();
+        try {
+            if (this.cdf != null) {
+                this.cdf.PTK_DisConnectBle();
+                this.cdf.PTK_StopScan();
+            }
+            if (activity != null) {
+                activity.unregisterReceiver(myBroadcastReceiver);
+            }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error disconnecting: " + e.getMessage());
+        }
     }
 
     public boolean isDeviceConnected(String address) {
-        BluetoothManager bluetoothManager = (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
-        List<BluetoothDevice> connectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
-        for (BluetoothDevice device : connectedDevices) {
-            if (device.getAddress().equals(address)) {
+        try {
+            if (activity == null) {
+                return false;
+            }
+            BluetoothManager bluetoothManager = (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
+            if (bluetoothManager == null) {
+                return false;
+            }
+            List<BluetoothDevice> connectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
+            for (BluetoothDevice device : connectedDevices) {
+                if (device.getAddress().equals(address)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error checking device connection: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean isPrinterInitialized() {
+        return this.cdf != null && activity != null;
+    }
+
+    public boolean reinitializePrinter() {
+        try {
+            if (activity != null) {
+                // Clean up old instance if it exists
+                if (this.cdf != null) {
+                    try {
+                        this.cdf.PTK_DisConnectBle();
+                        this.cdf.PTK_StopScan();
+                    } catch (Exception e) {
+                        Log.e("PrinterUtil", "Error cleaning up old printer instance: " + e.getMessage());
+                    }
+                }
+                
+                // Create new instance
+                this.cdf = new CDFPTKAndroidImpl(activity);
+                initReceive();
                 return true;
             }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error reinitializing printer: " + e.getMessage());
+            this.cdf = null; // Ensure it's null on error
         }
         return false;
     }
 
+    public void handlePrinterUnavailable() {
+        safeSendResult("printerUnavailable", "Printer is not available. Please check Bluetooth connection and try again.");
+    }
+
+    public boolean isBluetoothAvailable() {
+        try {
+            if (activity == null) {
+                return false;
+            }
+            BluetoothManager bluetoothManager = (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
+            return bluetoothManager != null && bluetoothManager.getAdapter() != null;
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error checking Bluetooth availability: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public void handleBluetoothStateChange(int state) {
+        try {
+            if (state == BluetoothAdapter.STATE_ON) {
+                // 开关蓝牙后，要停止扫瞄不然会导致无法立刻扫瞄到设备
+                if (this.cdf != null) {
+                    try {
+                        this.cdf.PTK_StopScan();
+                    } catch (Exception e) {
+                        Log.e("PrinterUtil", "Error stopping scan: " + e.getMessage());
+                    }
+                }
+                // Try to reinitialize if needed
+                if (this.cdf == null && activity != null) {
+                    reinitializePrinter();
+                }
+            } else if (state == BluetoothAdapter.STATE_OFF) {
+                // Bluetooth turned off, cleanup
+                if (this.cdf != null) {
+                    try {
+                        this.cdf.PTK_DisConnectBle();
+                        this.cdf.PTK_StopScan();
+                    } catch (Exception e) {
+                        Log.e("PrinterUtil", "Error during Bluetooth off cleanup: " + e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error handling Bluetooth state change: " + e.getMessage());
+        }
+    }
+
     private void initReceive() {
-        IntentFilter intentFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        activity.registerReceiver(myBroadcastReceiver, intentFilter);
+        try {
+            if (activity != null) {
+                IntentFilter intentFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+                activity.registerReceiver(myBroadcastReceiver, intentFilter);
+            }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error initializing receiver: " + e.getMessage());
+        }
     }
 
     private void setCallback() {
-        cdf.setCallbacks_BLE(new bleCallback() {
-            @Override
-            public void blePeripheralFound(FscDevice fscDevice, int i, byte[] bytes) {
-                if (fscDevice.getRssi() == 127) return;
-                try {
-                    if (fscDevice.getName().contains("POSTEK") && fscDevice.getAddress().contains("DC:0D:30") || fscDevice.getAddress().contains("DD:0D:30")) {
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Log.e("Tag","-------"+fscDevice.getName());
-                                sink.success(getResultStr("DEVICES_FOUND", fscDevice));
-                            }
-                        });
+        if (this.cdf == null) {
+            Log.e("PrinterUtil", "CDF object is null, cannot set callbacks");
+            return;
+        }
+        try {
+            // Double-check cdf is not null before using it
+            if (this.cdf == null) {
+                Log.e("PrinterUtil", "CDF object became null, cannot set callbacks");
+                return;
+            }
+            
+            this.cdf.setCallbacks_BLE(new bleCallback() {
+                @Override
+                public void blePeripheralFound(FscDevice fscDevice, int i, byte[] bytes) {
+                    if (fscDevice.getRssi() == 127) return;
+                    try {
+                        if (fscDevice.getName().contains("POSTEK") && fscDevice.getAddress().contains("DC:0D:30") || fscDevice.getAddress().contains("DD:0D:30")) {
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.e("Tag","-------"+fscDevice.getName());
+                                    Log.e("Tag","-------"+getResultStr("DEVICES_FOUND", fscDevice));
+                                    safeSendResult("DEVICES_FOUND", fscDevice);
+                                }
+                            });
+
+                        }
+                    } catch (NullPointerException ignored) {
 
                     }
-                } catch (NullPointerException ignored) {
-
-                }
 //                try {
 //                    //Log.e("Tag",fscDevice.getName());
 //                    if (fscDevice.getAddress().contains("DC:0D:30") || fscDevice.getAddress().contains("DD:0D:30")) {
@@ -162,51 +331,54 @@ public class PrinterUtil {
 //                } catch (NullPointerException ignored) {
 //
 //                }
-            }
+                }
 
-            @Override
-            public void servicesFound(BluetoothGatt bluetoothGatt, String s, List<BluetoothGattService> list) {
+                @Override
+                public void servicesFound(BluetoothGatt bluetoothGatt, String s, List<BluetoothGattService> list) {
 
-            }
+                }
 
-            @Override
-            public void blePeripheralConnected(BluetoothGatt bluetoothGatt, String s, ConnectType connectType) {
-                super.blePeripheralConnected(bluetoothGatt, s, connectType);
-                sink.success(getResultStr("blePeripheralConnected", s));
-            }
+                @Override
+                public void blePeripheralConnected(BluetoothGatt bluetoothGatt, String s, ConnectType connectType) {
+                    super.blePeripheralConnected(bluetoothGatt, s, connectType);
+                    safeSendResult("blePeripheralConnected", s);
+                }
 
-            @Override
-            public void blePeripheralDisconnected(BluetoothGatt bluetoothGatt, String s, int i) {
-                super.blePeripheralDisconnected(bluetoothGatt, s, i);
-                sink.success(getResultStr("blePeripheralDisconnected", s));
-            }
+                @Override
+                public void blePeripheralDisconnected(BluetoothGatt bluetoothGatt, String s, int i) {
+                    super.blePeripheralDisconnected(bluetoothGatt, s, i);
+                    safeSendResult("blePeripheralDisconnected", s);
+                }
 
-            @Override
-            public void sendPacketProgress(String address, int percentage, byte[] data) {
-                super.sendPacketProgress(address, percentage, data);
-                activity.runOnUiThread(() -> {
-                    sink.success(getResultStr("sendPacketProgress", percentage));
-                });
-            }
-        });
+                @Override
+                public void sendPacketProgress(String address, int percentage, byte[] data) {
+                    super.sendPacketProgress(address, percentage, data);
+                    activity.runOnUiThread(() -> {
+                        safeSendResult("sendPacketProgress", percentage);
+                    });
+                }
+            });
 
-        cdf.setCallbacks_SPP(new sppCallback() {
-            @Override
-            public void sppPeripheralFound(FscDevice fscDevice, int i) {
+            this.cdf.setCallbacks_SPP(new sppCallback() {
+                @Override
+                public void sppPeripheralFound(FscDevice fscDevice, int i) {
 //                uiFoundDevice(fscDevice);
-                try {
-                    //Log.e("Tag",fscDevice.getName());
-                    if (fscDevice.getAddress().contains("DC:0D:30") || fscDevice.getAddress().contains("DD:0D:30")) {
-                        Log.e("Tag","1-------"+fscDevice.getName());
+                    try {
+                        //Log.e("Tag",fscDevice.getName());
+                        if (fscDevice.getAddress().contains("DC:0D:30") || fscDevice.getAddress().contains("DD:0D:30")) {
+                            Log.e("Tag","1-------"+fscDevice.getName());
 //                        AddDevice(fscDevice);
 //                        sink.success(getResultStr("DEVICES_FOUND", fscDevice));
 
-                    }
-                } catch (NullPointerException ignored) {
+                        }
+                    } catch (NullPointerException ignored) {
 
+                    }
                 }
-            }
-        });
+            });
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error setting callbacks: " + e.getMessage());
+        }
     }
 
     private String getResultStr(String type){
@@ -220,4 +392,19 @@ public class PrinterUtil {
         }
         return new Gson().toJson(result);
     }
+
+    private void safeSendResult(String type, Object data) {
+        try {
+            if (sink != null) {
+                sink.success(getResultStr(type, data));
+            }
+        } catch (Exception e) {
+            Log.e("PrinterUtil", "Error sending result: " + e.getMessage());
+        }
+    }
+
+    private void safeSendResult(String type) {
+        safeSendResult(type, null);
+    }
 }
+

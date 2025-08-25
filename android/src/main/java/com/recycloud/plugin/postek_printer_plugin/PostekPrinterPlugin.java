@@ -43,6 +43,11 @@ public class PostekPrinterPlugin implements FlutterPlugin, MethodCallHandler, Ac
 
     Log.e("打印插件", "onMethodCall: " + call.method);
 
+    if (printerUtil == null || !printerUtil.isPrinterInitialized()) {
+      result.success("{\"type\":\"error\",\"data\":\"Printer not initialized\"}");
+      return;
+    }
+
 //    if (!BluetoothUtil.isBluetoothSupported()){
 //      result.success("Bluetooth not supported");
 //      return;
@@ -58,26 +63,45 @@ public class PostekPrinterPlugin implements FlutterPlugin, MethodCallHandler, Ac
 
 //    Log.e("打印插件", "onMethodCall: 蓝牙检查通过");
 
-    switch (call.method){
-      case "getPlatformVersion":
-        result.success("Android " + android.os.Build.VERSION.RELEASE);
-        break;
-      case "StartScan":
-        printerUtil.scanDevices();
-        break;
-      case "ConnectDevices":
-        printerUtil.connectedBLE(call);
-        break;
-      case "Disconnected":
-        printerUtil.disconnected();
-        break;
-      case "Print":
-        Map<String, String> printData = (Map<String, String>)call.argument("PrintData");
-        printerUtil.print(call.argument("PrintType"), printData);
-        break;
-      default:
-        result.notImplemented();
-        break;
+    try {
+      switch (call.method){
+        case "getPlatformVersion":
+          result.success("Android " + android.os.Build.VERSION.RELEASE);
+          break;
+        case "StartScan":
+          printerUtil.scanDevices();
+          break;
+        case "ConnectDevices":
+          printerUtil.connectedBLE(call);
+          break;
+        case "Disconnected":
+          printerUtil.disconnected();
+          break;
+        case "Print":
+          Map<String, String> printData = (Map<String, String>)call.argument("PrintData");
+          printerUtil.print(call.argument("PrintType"), printData);
+          break;
+        case "Reinitialize":
+          if (printerUtil.reinitializePrinter()) {
+            result.success("{\"type\":\"success\",\"data\":\"Printer reinitialized\"}");
+          } else {
+            result.success("{\"type\":\"error\",\"data\":\"Failed to reinitialize printer\"}");
+          }
+          break;
+        case "GetStatus":
+          if (printerUtil.isPrinterInitialized()) {
+            result.success("{\"type\":\"success\",\"data\":\"Printer is initialized\"}");
+          } else {
+            result.success("{\"type\":\"error\",\"data\":\"Printer is not initialized\"}");
+          }
+          break;
+        default:
+          result.notImplemented();
+          break;
+      }
+    } catch (Exception e) {
+      Log.e("PostekPrinterPlugin", "Error in method call: " + e.getMessage());
+      result.success("{\"type\":\"error\",\"data\":\"" + e.getMessage() + "\"}");
     }
   }
 
@@ -98,7 +122,11 @@ public class PostekPrinterPlugin implements FlutterPlugin, MethodCallHandler, Ac
 
       @Override
       public void onCancel(Object arguments) {
+        if (printerUtil != null) {
+          printerUtil.cleanup();
+        }
         sink = null;
+        printerUtil = null;
       }
     });
   }
@@ -111,11 +139,17 @@ public class PostekPrinterPlugin implements FlutterPlugin, MethodCallHandler, Ac
   @Override
   public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
     activity = binding.getActivity();
-
+    if (printerUtil != null && !printerUtil.isPrinterInitialized()) {
+      printerUtil.reinitializePrinter();
+    }
   }
 
   @Override
   public void onDetachedFromActivity() {
+    if (printerUtil != null) {
+      printerUtil.cleanup();
+    }
+    printerUtil = null;
     activity = null;
   }
 }
