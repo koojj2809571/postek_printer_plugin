@@ -262,6 +262,29 @@ public class PrinterUtil {
                 if (this.cdf == null && activity != null) {
                     reinitializePrinter();
                 }
+                
+                // 蓝牙重新打开后，延迟一段时间自动开始扫描
+                if (this.cdf != null && activity != null) {
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                if (isBluetoothEnabled() && isPrinterInitialized()) {
+                                    Log.d("PrinterUtil", "Auto-starting scan after Bluetooth reconnection");
+                                    // 先断开之前的连接
+                                    cdf.PTK_DisConnectBle();
+                                    // 设置回调
+                                    setCallback();
+                                    // 开始扫描
+                                    cdf.PTK_StartScan();
+                                    safeSendResult("autoScanStarted", "Auto scan started after Bluetooth reconnection");
+                                }
+                            } catch (Exception e) {
+                                Log.e("PrinterUtil", "Error during auto scan: " + e.getMessage());
+                            }
+                        }
+                    }, 2000); // 延迟2秒后开始扫描，确保蓝牙完全初始化
+                }
             } else if (state == BluetoothAdapter.STATE_OFF) {
                 // Bluetooth turned off, cleanup
                 if (this.cdf != null) {
